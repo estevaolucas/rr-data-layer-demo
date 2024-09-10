@@ -110,6 +110,8 @@ export default function EditSheet() {
   const onImageEditClick = () => navigateToImages();
   const onImageUploadClick = () => navigateToImages();
 
+  const onLocationsClick = () => navigate("locations", { relative: "path" });
+
   const onOpenChange = () => navigate(-1);
   const onSubmit = (values: any) => {
     console.log(values);
@@ -246,7 +248,7 @@ export default function EditSheet() {
                         <Button
                           variant="link"
                           className="text-blue-600"
-                          onClick={onImageEditClick}
+                          onClick={onLocationsClick}
                         >
                           Edit
                         </Button>
