@@ -20,6 +20,10 @@ import { Button } from "@/components/ui/button";
 import { ImageIcon } from "lucide-react";
 import { json, Outlet, useLoaderData, useNavigate } from "@remix-run/react";
 import { LoaderFunction } from "@remix-run/node";
+import { TextField } from "@/components/form/TextField";
+import { FormProvider, useForm } from "react-hook-form";
+import { SelectField } from "@/components/form/SelectField";
+import { HiddenField } from "@/components/form/HiddenField";
 
 export const clientLoader: LoaderFunction = async ({ params }) => {
   const response = await fetch(`https://dummyjson.com/products/${params.id}`);
@@ -75,6 +79,20 @@ export default function EditSheet() {
 
   const onOpenChange = () => navigate(-1);
 
+  const methods = useForm({
+    defaultValues: {
+      name: data.product.title,
+      description: data.product.description,
+      location: "nyc",
+    },
+  });
+
+  const { handleSubmit } = methods;
+
+  const onSubmit = (values: any) => {
+    console.log(values);
+  };
+
   return (
     <>
       <Dialog open={true} onOpenChange={onOpenChange}>
@@ -82,103 +100,95 @@ export default function EditSheet() {
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Edit item</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Name
-              </label>
-              <Input id="name" value={data.product.title} />
-            </div>
-            <div className="flex items-start space-x-4">
-              <div className="flex-grow">
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Description
-                </label>
-                <Textarea
-                  id="description"
-                  value={data.product.description}
-                  className="h-32"
+          <FormProvider {...methods}>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <TextField
+                label="Name"
+                id="name"
+                name="name"
+                rules={{ required: "Name is required" }}
+              />
+
+              <div className="flex items-start space-x-4">
+                <div className="flex-grow">
+                  <TextField
+                    label="Description"
+                    id="description"
+                    name="description"
+                    rules={{ required: "Description is required" }}
+                  />
+                </div>
+                <div className="w-1/6">
+                  <img
+                    src={data.product.thumbnail}
+                    alt="Item"
+                    className="w-full h-auto object-cover rounded-md"
+                  />
+                  <Button
+                    variant="link"
+                    className="mt-2"
+                    onClick={onImageEditClick}
+                  >
+                    Edit
+                  </Button>
+                </div>
+              </div>
+              <div className="border border-dashed border-gray-300 rounded-md p-4">
+                <div className="grid grid-cols-10 gap-4">
+                  {selectedImages.map((image) => (
+                    <div key={image.id} className="relative">
+                      <img
+                        src={image.url}
+                        alt={image.name}
+                        className="w-full h-auto object-cover rounded-md"
+                      />
+
+                      <p className="mt-1 text-sm text-gray-500">{image.name}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-center space-x-2">
+                  <ImageIcon className="w-6 h-6 text-gray-400" />
+                  <span className="text-sm text-gray-500">
+                    Drag and drop images here,
+                  </span>
+                  <Button
+                    variant="link"
+                    className="text-sm p-0"
+                    onClick={onImageUploadClick}
+                  >
+                    upload,
+                  </Button>
+                  <span className="text-sm text-gray-500">or</span>
+                  <Button
+                    variant="link"
+                    className="text-sm p-0"
+                    onClick={onImageBrowseClick}
+                  >
+                    browse image library.
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <SelectField
+                  label="Locations"
+                  id="locations"
+                  name="location"
+                  options={[
+                    { label: "New York", value: "nyc" },
+                    { label: "Atlanta", value: "atl" },
+                  ]}
                 />
               </div>
-              <div className="w-1/6">
-                <img
-                  src={data.product.thumbnail}
-                  alt="Item"
-                  className="w-full h-auto object-cover rounded-md"
-                />
-                <Button
-                  variant="link"
-                  className="mt-2"
-                  onClick={onImageEditClick}
-                >
-                  Edit
-                </Button>
-              </div>
-            </div>
-            <div className="border border-dashed border-gray-300 rounded-md p-4">
-              <div className="grid grid-cols-10 gap-4">
-                {selectedImages.map((image) => (
-                  <div key={image.id} className="relative">
-                    <img
-                      src={image.url}
-                      alt={image.name}
-                      className="w-full h-auto object-cover rounded-md"
-                    />
 
-                    <p className="mt-1 text-sm text-gray-500">{image.name}</p>
-                  </div>
-                ))}
-              </div>
+              <HiddenField name="images" value={selectedImages} />
 
-              <div className="flex items-center justify-center space-x-2">
-                <ImageIcon className="w-6 h-6 text-gray-400" />
-                <span className="text-sm text-gray-500">
-                  Drag and drop images here,
-                </span>
-                <Button
-                  variant="link"
-                  className="text-sm p-0"
-                  onClick={onImageUploadClick}
-                >
-                  upload,
-                </Button>
-                <span className="text-sm text-gray-500">or</span>
-                <Button
-                  variant="link"
-                  className="text-sm p-0"
-                  onClick={onImageBrowseClick}
-                >
-                  browse image library.
-                </Button>
+              <div className="flex justify-between mt-6">
+                <Button>Save</Button>
               </div>
-            </div>
-            <div>
-              <label
-                htmlFor="locations"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Locations
-              </label>
-              <Select defaultValue="nyc">
-                <SelectTrigger id="locations">
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ncy">New York</SelectItem>
-                  <SelectItem value="atl">Atlanta</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex justify-between mt-6">
-            <Button>Save</Button>
-          </div>
+            </form>
+          </FormProvider>
         </DialogContent>
       </Dialog>
       <Outlet
