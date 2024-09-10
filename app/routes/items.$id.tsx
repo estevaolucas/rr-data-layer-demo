@@ -6,7 +6,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ImageIcon } from "lucide-react";
+import {
+  ImageIcon,
+  MoreHorizontal,
+  Star,
+  Building2,
+  MonitorIcon,
+  GlobeIcon,
+  DollarSign,
+} from "lucide-react";
 import {
   Await,
   defer,
@@ -20,6 +28,14 @@ import { FormProvider, useForm } from "react-hook-form";
 import { SelectField } from "@/components/form/SelectField";
 import { HiddenField } from "@/components/form/HiddenField";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 interface Image {
   id: string;
@@ -52,18 +68,24 @@ export const clientLoader: LoaderFunction = async ({ params }) => {
 
   return defer({
     defaultValues: {
+      itemType: "product",
       name: product.title,
       description: product.description,
       location: "atl",
+      price: 100,
     },
-    product: {
-      ...product,
-      images: images.map((image) => ({
-        id: window.crypto.getRandomValues(new Uint32Array(1))[0].toString(),
-        url: image,
-        name: Math.random().toString(36).substr(2, 5),
-      })),
-    },
+    product: new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          ...product,
+          images: images.map((image) => ({
+            id: window.crypto.getRandomValues(new Uint32Array(1))[0].toString(),
+            url: image,
+            name: Math.random().toString(36).substr(2, 5),
+          })),
+        });
+      }, 1000);
+    }),
     locations: new Promise((resolve) => {
       setTimeout(() => {
         resolve([
@@ -79,9 +101,7 @@ export default function EditSheet() {
   const { product, locations, defaultValues } = useLoaderData<Data>();
 
   const [selectedImages, setSelectedImages] = useState<Image[]>([]);
-
   const navigate = useNavigate();
-
   const methods = useForm({ defaultValues });
   const { handleSubmit } = methods;
 
@@ -91,7 +111,6 @@ export default function EditSheet() {
   const onImageUploadClick = () => navigateToImages();
 
   const onOpenChange = () => navigate(-1);
-
   const onSubmit = (values: any) => {
     console.log(values);
   };
@@ -104,162 +123,220 @@ export default function EditSheet() {
             <DialogTitle className="text-2xl font-bold">Edit item</DialogTitle>
           </DialogHeader>
           <FormProvider {...methods}>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-8">
               {/* Two-column grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Left Column - Form Fields */}
-                <div className="md:col-span-2 space-y-6">
-                  {/* Item Type Field */}
-                  <div>
-                    <label
-                      htmlFor="itemType"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Item type
-                    </label>
-                    <SelectField
-                      id="itemType"
-                      name="itemType"
-                      options={[
-                        { label: "Package", value: "package" },
-                        { label: "Single Item", value: "single" },
-                      ]}
-                    />
-                  </div>
-
-                  {/* Name Field */}
-                  <TextField
-                    label="Name"
-                    id="name"
-                    name="name"
-                    rules={{ required: "Name is required" }}
-                  />
-
-                  {/* Price Field */}
-                  <TextField
-                    label="Price"
-                    id="price"
-                    name="price"
-                    rules={{ required: "Price is required" }}
-                  />
-
-                  {/* Description Field */}
-                  <TextField
-                    label="Description"
-                    id="description"
-                    name="description"
-                    rules={{ required: "Description is required" }}
-                  />
-
-                  {/* Image Upload Section */}
-                  <div className="border border-dashed border-gray-300 rounded-md p-4">
-                    <div className="flex items-center space-x-2">
-                      <ImageIcon className="w-6 h-6 text-gray-400" />
-                      <span className="text-sm text-gray-500">
-                        Drag and drop images here,
-                      </span>
-                      <Button variant="link" className="text-sm p-0">
-                        upload,
-                      </Button>
-                      <span className="text-sm text-gray-500">or</span>
-                      <Button variant="link" className="text-sm p-0">
-                        add from image library
-                      </Button>
+                <Suspense
+                  fallback={
+                    <div className="md:col-span-2 space-y-4">
+                      <Skeleton className="h-12 w-full rounded-lg" />{" "}
+                      <Skeleton className="h-12 w-full rounded-lg" />{" "}
+                      <Skeleton className="h-12 w-full rounded-lg" />{" "}
+                      <Skeleton className="h-12 w-full rounded-lg" />{" "}
+                      <Skeleton className="h-12 w-full rounded-lg" />{" "}
+                      <Skeleton className="h-36 w-full rounded-lg" />{" "}
                     </div>
-                  </div>
+                  }
+                >
+                  <Await resolve={product}>
+                    {() => (
+                      <div className="md:col-span-2 space-y-4">
+                        {/* Item Type Field */}
+                        <SelectField
+                          name="itemType"
+                          id="itemType"
+                          label="Item Type"
+                          options={[
+                            { label: "Package", value: "package" },
+                            { label: "Product", value: "product" },
+                            { label: "Service", value: "service" },
+                          ]}
+                        />
 
-                  {/* Taxes */}
-                  <div className="text-sm text-gray-500">
-                    Taxes: All 3 taxes
-                  </div>
-                </div>
+                        {/* Name Field */}
+                        <TextField
+                          name="name"
+                          id="name"
+                          label="Name"
+                          rules={{ required: "Name is required" }}
+                        />
+
+                        {/* Price Field */}
+                        <TextField
+                          name="price"
+                          id="price"
+                          label="Price"
+                          placeholder="Enter price"
+                          currency={true}
+                          rules={{ required: "Price is required" }}
+                        />
+
+                        {/* Description Field */}
+                        <TextField
+                          label="Description"
+                          id="description"
+                          name="description"
+                          placeholder="Description"
+                        />
+
+                        {/* Image Upload Section */}
+                        <div className="border border-dashed border-gray-300 rounded-lg p-4 text-center">
+                          <div className="grid grid-cols-5 gap-10">
+                            {selectedImages.map((image) => (
+                              <div key={image.id} className="relative">
+                                <img
+                                  src={image.url}
+                                  alt={image.name}
+                                  className="w-full h-auto object-cover rounded-md"
+                                />
+
+                                <p className="mt-1 text-sm text-gray-500">
+                                  {image.name}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+
+                          <ImageIcon className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                          <p className="text-sm text-gray-500">
+                            Drag and drop images here,{" "}
+                            <Button
+                              variant="link"
+                              className="p-0"
+                              onClick={onImageUploadClick}
+                            >
+                              upload
+                            </Button>
+                            , or{" "}
+                            <Button
+                              variant="link"
+                              className="p-0"
+                              onClick={onImageBrowseClick}
+                            >
+                              add from image library
+                            </Button>
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </Await>
+                </Suspense>
 
                 {/* Right Column - Information Section */}
                 <div className="space-y-4">
-                  {/* Where it’s sold */}
-                  <div className="border rounded-md p-4">
-                    <h3 className="text-lg font-medium text-gray-700">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-2 flex justify-between items-center">
                       Where it's sold
+                      <Button variant="link" className="text-blue-600">
+                        Add
+                      </Button>
                     </h3>
-                    <div className="flex justify-between mt-2">
-                      <span>Locations</span>
-                      <Button variant="link" className="text-sm p-0">
-                        Edit
-                      </Button>
-                    </div>
-
-                    {/* Render the SelectField with Suspense and Await */}
-                    <Suspense
-                      fallback={
-                        <div className="space-y-4">
-                          <Skeleton className="h-8 w-full" />
+                    <div className="space-y-4">
+                      {/* Locations */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Building2 className="w-5 h-5 text-gray-500" />
+                          <div>
+                            <p className="font-medium">Locations</p>
+                            <p className="text-sm text-gray-500">
+                              All 3 locations
+                            </p>
+                          </div>
                         </div>
-                      }
-                    >
-                      <Await resolve={locations}>
-                        {(
-                          locationOptions: { label: string; value: string }[]
-                        ) => (
-                          <SelectField
-                            label="Locations"
-                            id="locations"
-                            name="location"
-                            options={locationOptions}
-                          />
-                        )}
-                      </Await>
-                    </Suspense>
+                        <Button
+                          variant="link"
+                          className="text-blue-600"
+                          onClick={onImageEditClick}
+                        >
+                          Edit
+                        </Button>
+                      </div>
 
-                    <div className="flex justify-between mt-4">
-                      <span>POS tile</span>
-                      <Button variant="link" className="text-sm p-0">
-                        Edit
+                      <Suspense fallback={<Skeleton className="h-8 w-full" />}>
+                        <Await resolve={locations}>
+                          {(
+                            locationOptions: { label: string; value: string }[]
+                          ) => (
+                            <SelectField
+                              label="Locations"
+                              id="locations"
+                              name="location"
+                              options={locationOptions}
+                            />
+                          )}
+                        </Await>
+                      </Suspense>
+
+                      <Button variant="link" className="text-blue-600 p-0">
+                        Edit POS tile
                       </Button>
+
+                      {/* Kiosks */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <MonitorIcon className="w-5 h-5 text-gray-500" />
+                          <p className="font-medium">Kiosks</p>
+                        </div>
+                        <Switch />
+                      </div>
+
+                      {/* Online Channels */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <GlobeIcon className="w-5 h-5 text-gray-500" />
+                          <div>
+                            <p className="font-medium">Online channels</p>
+                            <p className="text-sm text-gray-500">
+                              All 5 channels
+                            </p>
+                          </div>
+                        </div>
+                        <Button variant="link" className="text-blue-600">
+                          Edit
+                        </Button>
+                      </div>
+
+                      {/* Site Visibility */}
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium">Site visibility</p>
+                        <Select defaultValue="visible">
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Select visibility" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="visible">Visible</SelectItem>
+                            <SelectItem value="hidden">Hidden</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Payment Links */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <DollarSign className="w-5 h-5 text-gray-500" />
+                          <div>
+                            <p className="font-medium">Payment links</p>
+                            <p className="text-sm text-gray-500">
+                              Collect payments with a link or buy button.{" "}
+                              <Button
+                                variant="link"
+                                className="p-0 text-blue-600"
+                              >
+                                Learn more
+                              </Button>
+                            </p>
+                          </div>
+                        </div>
+                        <Switch />
+                      </div>
                     </div>
-
-                    <div className="flex justify-between mt-4">
-                      <span>Kiosks</span>
-                      <Button variant="link" className="text-sm p-0">
-                        <input type="checkbox" />
-                      </Button>
-                    </div>
-
-                    <div className="flex justify-between mt-4">
-                      <span>Online channels</span>
-                      <Button variant="link" className="text-sm p-0">
-                        Edit
-                      </Button>
-                    </div>
-
-                    <div className="flex justify-between mt-4">
-                      <span>Site visibility</span>
-                      <Button variant="link" className="text-sm p-0">
-                        Visible
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Payment links */}
-                  <div className="flex justify-between mt-4">
-                    <span>Payment links</span>
-                    <Button variant="link" className="text-sm p-0">
-                      <input type="checkbox" />
-                    </Button>
-                  </div>
-
-                  {/* Menus */}
-                  <div className="flex justify-between mt-4">
-                    <span>Menus</span>
-                    <Button variant="link" className="text-sm p-0">
-                      Add to menus
-                    </Button>
                   </div>
                 </div>
               </div>
 
               <HiddenField name="images" value={selectedImages} />
 
-              <div className="flex justify-end mt-6">
+              <div className="flex justify-between mt-6">
                 <Button type="submit" className="bg-blue-500 text-white">
                   Save
                 </Button>
@@ -268,7 +345,20 @@ export default function EditSheet() {
           </FormProvider>
         </DialogContent>
       </Dialog>
-      <Outlet context={{ product, selectedImages, setSelectedImages }} />
+
+      <Suspense>
+        <Await resolve={product}>
+          {(resolvedProduct) => (
+            <Outlet
+              context={{
+                product: resolvedProduct,
+                selectedImages,
+                setSelectedImages,
+              }}
+            />
+          )}
+        </Await>
+      </Suspense>
     </>
   );
 }

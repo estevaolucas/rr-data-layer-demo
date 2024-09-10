@@ -31,7 +31,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
       control={control}
       rules={rules}
       render={({ field, fieldState: { error } }) => (
-        <>
+        <div>
           <label
             htmlFor={id}
             className="block text-sm font-medium text-gray-700"
@@ -54,7 +54,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
           {error && (
             <p className="text-sm text-red-500 mt-1">{error.message}</p>
           )}
-        </>
+        </div>
       )}
     />
   );

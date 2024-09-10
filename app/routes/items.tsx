@@ -41,7 +41,6 @@ export const clientLoader: LoaderFunction = async ({ request }) => {
   const searchQuery = url.searchParams.get("search") || "";
   const order = url.searchParams.get("sortOrder") || "asc";
 
-  console.log({ a: requestUrl.searchParams.toString() });
   const queryParams = new URLSearchParams({
     skip: String(nextPage),
     limit: "10",
