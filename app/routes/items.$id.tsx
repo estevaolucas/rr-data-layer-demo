@@ -19,6 +19,7 @@ import {
   Await,
   defer,
   Outlet,
+  ShouldRevalidateFunction,
   useLoaderData,
   useNavigate,
 } from "@remix-run/react";
@@ -97,6 +98,10 @@ export const clientLoader: LoaderFunction = async ({ params }) => {
   });
 };
 
+export const shouldRevalidate: ShouldRevalidateFunction = ({ currentUrl }) => {
+  return false;
+};
+
 export default function EditSheet() {
   const { product, locations, defaultValues } = useLoaderData<Data>();
 
@@ -107,12 +112,11 @@ export default function EditSheet() {
 
   const navigateToImages = () => navigate("images", { relative: "path" });
   const onImageBrowseClick = () => navigateToImages();
-  const onImageEditClick = () => navigateToImages();
   const onImageUploadClick = () => navigateToImages();
 
   const onLocationsClick = () => navigate("locations", { relative: "path" });
 
-  const onOpenChange = () => navigate(-1);
+  const onOpenChange = () => navigate("..");
   const onSubmit = (values: any) => {
     console.log(values);
   };

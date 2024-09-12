@@ -13,6 +13,7 @@ import { LoaderFunction } from "@remix-run/node";
 import {
   Form,
   Outlet,
+  ShouldRevalidateFunction,
   json,
   useFetcher,
   useLoaderData,
@@ -34,6 +35,7 @@ interface Product {
 }
 
 export const clientLoader: LoaderFunction = async ({ request }) => {
+  console.log("--loader");
   const url = new URL(window.location.href);
   const requestUrl = new URL(request.url);
 
@@ -61,6 +63,10 @@ export const clientLoader: LoaderFunction = async ({ request }) => {
   return json({ products: data.products, page: data.skip });
 };
 
+export const shouldRevalidate: ShouldRevalidateFunction = ({ currentUrl }) => {
+  return currentUrl.pathname === "/items";
+};
+
 interface Data {
   products: Product[];
   page: number;
@@ -70,7 +76,7 @@ const Library = () => {
   const data = useLoaderData<Data>();
   const revalidator = useRevalidator();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const fetcher = useFetcher<Data>();
 
   const [products, setProducts] = useState<Product[]>(data.products);
@@ -97,22 +103,19 @@ const Library = () => {
   };
 
   const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("search", e.currentTarget.value);
-    window.history.pushState(null, "", url.toString());
-
     setProducts([]);
-    revalidator.revalidate();
+    setSearchParams({ search: e.currentTarget.value }, { replace: true });
   };
 
   const onSortOrderToggle = () => {
-    const url = new URL(window.location.href);
-    const sortOrder = url.searchParams.get("sortOrder") || "asc";
-
-    url.searchParams.set("sortOrder", sortOrder === "asc" ? "desc" : "asc");
-    window.history.pushState(null, "", url.toString());
-
-    revalidator.revalidate();
+    setSearchParams(
+      (prev) => {
+        const sortOrder = prev.get("sortOrder") || "asc";
+        prev.set("sortOrder", sortOrder === "asc" ? "desc" : "asc");
+        return prev;
+      },
+      { replace: true }
+    );
   };
 
   // A method for fetching next page
@@ -131,17 +134,15 @@ const Library = () => {
         <h1 className="text-2xl font-bold mb-4">Items</h1>
 
         <div className="flex justify-between items-center mb-4">
-          <div className="relative">
-            <Form method="post" className="flex items-center">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                name="search"
-                className="pl-8 w-64"
-                placeholder="Filter products..."
-                defaultValue={searchQuery}
-                onChange={onSearchChange}
-              />
-            </Form>
+          <div className="relative flex items-center">
+            <Search className="absolute  left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4" />
+            <Input
+              name="search"
+              className="pl-8 w-64"
+              placeholder="Filter products..."
+              defaultValue={searchQuery}
+              onChange={onSearchChange}
+            />
           </div>
         </div>
 
